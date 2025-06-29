@@ -1,13 +1,10 @@
-
+import sys
 import os
-from dotenv import load_dotenv
-
-
 from google import genai
 from google.genai import types
+from dotenv import load_dotenv
 
-
-import sys
+from prompts import system_prompt
 
 def main():
     load_dotenv()
@@ -18,7 +15,11 @@ def main():
     args = [arg for arg in sys.argv[1:] if not arg.startswith("--")]
 
     if not args:
-        print("AI code assistant")
+        print("""
+              Welcome to Wizrd AI, your gemini based code assistant
+              Usage: python main.py "your prompt here" [--verbose]
+              Example: python main.py "How do I build a calculator app?"
+              """)
         sys.exit(1)
 
     user_prompt = " ".join(args)
@@ -28,14 +29,19 @@ def main():
 
     response = generate_content(client,messages)
     if verbose:
-        print(f"User prompt: {user_prompt}")
-        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
-    print(f"Response: {response.text}")
+        print(f"""
+            User prompt: {user_prompt}
+            Prompt tokens: {response.usage_metadata.prompt_token_count}
+            Response tokens: {response.usage_metadata.candidates_token_count}
+            Response:
+            {response.text}
+            """)
 
 def generate_content(client, messages):
     response = client.models.generate_content(
-        model='gemini-2.0-flash-001', contents=messages
+        model='gemini-2.0-flash-001',
+        contents=messages,
+        config=types.GenerateContentConfig(system_instruction=system_prompt)
     )
     return response
     
