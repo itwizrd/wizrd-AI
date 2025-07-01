@@ -5,6 +5,18 @@ from google.genai import types
 from dotenv import load_dotenv
 
 from prompts import system_prompt
+from functions.get_files_info import *
+
+def generate_content(client, messages):
+    response = client.models.generate_content(
+        model='gemini-2.0-flash-001',
+        contents=messages,
+        config=types.GenerateContentConfig(
+            tools=[available_functions],
+            system_instruction=system_prompt
+        ),
+    )
+    return response
 
 def main():
     load_dotenv()
@@ -33,18 +45,12 @@ def main():
             User prompt: {user_prompt}
             Prompt tokens: {response.usage_metadata.prompt_token_count}
             Response tokens: {response.usage_metadata.candidates_token_count}
-            Response:
-            {response.text}
             """)
-
-def generate_content(client, messages):
-    response = client.models.generate_content(
-        model='gemini-2.0-flash-001',
-        contents=messages,
-        config=types.GenerateContentConfig(system_instruction=system_prompt)
-    )
-    return response
-    
+    if response.function_calls:
+        for f in response.function_calls:
+            print(f"Calling function: {f.name}({f.args})")
+    else:
+        print(f"Response:{response.text}")
 
 if __name__ == "__main__":
     main()

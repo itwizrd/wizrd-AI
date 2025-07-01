@@ -1,3 +1,7 @@
-venv/
-.env
+# uv
+.venv/
+uv.lock
+# python
 __pycache__/
+# environment variables
+.env
