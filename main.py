@@ -5,7 +5,7 @@ from google.genai import types
 from dotenv import load_dotenv
 
 from prompts import system_prompt
-from functions.get_files_info import *
+from call_function import available_functions
 
 def generate_content(client, messages):
     response = client.models.generate_content(
