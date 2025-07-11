@@ -1,6 +1,5 @@
 import os
 import subprocess
-from google import genai
 from google.genai import types
 
 schema_run_python_file = types.FunctionDeclaration(
@@ -9,7 +8,7 @@ schema_run_python_file = types.FunctionDeclaration(
     parameters=types.Schema(
         type=types.Type.OBJECT,
         properties={
-            "directory": types.Schema(
+            "file_path": types.Schema(
                 type=types.Type.STRING,
                 description="The path of the python file to run, relative to the working directory.",
             ),

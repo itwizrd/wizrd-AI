@@ -1,5 +1,4 @@
 import os
-from google import genai
 from google.genai import types
 
 schema_get_file_content = types.FunctionDeclaration(
@@ -8,7 +7,7 @@ schema_get_file_content = types.FunctionDeclaration(
     parameters=types.Schema(
         type=types.Type.OBJECT,
         properties={
-            "directory": types.Schema(
+            "file_path": types.Schema(
                 type=types.Type.STRING,
                 description="The path of the file to read from, relative to the working directory.",
             ),
