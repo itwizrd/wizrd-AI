@@ -7,25 +7,13 @@ from dotenv import load_dotenv
 from prompts import system_prompt
 from call_function import *
 
-def generate_content(client, messages):
-    response = client.models.generate_content(
-        model='gemini-2.0-flash-001',
-        contents=messages,
-        config=types.GenerateContentConfig(
-            tools=[available_functions],
-            system_instruction=system_prompt
-        ),
-    )
-    return response
-
 def main():
     load_dotenv()
     api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
 
-    verbose = "--verbose" in sys.argv
+    
     args = [arg for arg in sys.argv[1:] if not arg.startswith("--")]
-
     if not args:
         print("""
               Welcome to Wizrd AI, your gemini based code assistant
@@ -38,25 +26,46 @@ def main():
     messages = [
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
     ]
-
-    response = generate_content(client,messages)
+    verbose = "--verbose" in sys.argv
     if verbose:
         print(f"""
             User prompt: {user_prompt}
+            """)
+    
+    generate_content(client, messages, verbose)
+
+def generate_content(client, messages, verbose):
+    response = client.models.generate_content(
+        model='gemini-2.0-flash-001',
+        contents=messages,
+        config=types.GenerateContentConfig(
+            tools=[available_functions],
+            system_instruction=system_prompt
+        ),
+    )
+    for candidate in response.candidates:
+        messages.append(candidate.content)
+    if verbose:
+        print(f"""
             Prompt tokens: {response.usage_metadata.prompt_token_count}
             Response tokens: {response.usage_metadata.candidates_token_count}
             """)
-    if response.function_calls:
-        for f in response.function_calls:
+    if not response.function_calls:
+        return f"Response:{response.text}"
+    for f in response.function_calls:
+        try:
             function_call_result = call_function(f, verbose)
-            try:
-                function_call_result.parts[0].function_response.response
-            except:
-                raise Exception("Fatal exception")
-            if verbose:
-                print(f"-> {function_call_result.parts[0].function_response.response}")
-    else:
-        print(f"Response:{response.text}")
+            if not function_call_result.parts or len(function_call_result.parts) == 0:
+                raise Exception("No output from function")
+            messages.append(types.Content(
+                role="tool",
+                parts=[function_call_result.parts[0]]
+            ))
+        except Exception as e:
+            raise Exception(f"Fatal exception, please check your inputs: tool call error: {e}")
+        if verbose:
+            print(f"-> {function_call_result.parts[0].function_response.response}")
+
 
 if __name__ == "__main__":
     main()
