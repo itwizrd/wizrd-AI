@@ -20,7 +20,9 @@ available_functions = types.Tool(
     ]
 )
 def get_files_info(working_directory, directory=None):
-    abs_dir = os.path.abspath(os.path.join(working_directory, directory))
+    if working_directory is None:
+        raise ValueError("working_directory is missing in get_files_info")
+    abs_dir = os.path.abspath(os.path.join(working_directory, directory or ""))
     is_dir = os.path.isdir(abs_dir)
     
     # returning strings as errors so the LLM can read the error and try a different approach
