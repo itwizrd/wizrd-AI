@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 from prompts import system_prompt
 from call_function import *
+from config import MAX_ITERATION
 
 def main():
     load_dotenv()
@@ -33,12 +34,18 @@ def main():
             """)
     
     count = 0
-    while count < 20:
+    while True:
         count += 1
-        is_done, final_response, messages = generate_content(client, messages, verbose)
-        if is_done:
-            print(f"Final Response:\n{final_response}")
-            break
+        if count > MAX_ITERATION:
+            print(f"Maximum Iterations reached: {MAX_ITERATION}\n cannot continue")
+            sys.exit(1)
+        try:
+            is_done, final_response, messages = generate_content(client, messages, verbose)
+            if is_done:
+                print(f"Final Response:\n{final_response}")
+                break
+        except Exception as e:
+            print(f"Error in generated_content: {e}")
 
 def generate_content(client, messages, verbose):
     response = client.models.generate_content(
