@@ -32,7 +32,13 @@ def main():
             User prompt: {user_prompt}
             """)
     
-    generate_content(client, messages, verbose)
+    count = 0
+    while count < 20:
+        count += 1
+        is_done, final_response, messages = generate_content(client, messages, verbose)
+        if is_done:
+            print(f"Final Response:\n{final_response}")
+            break
 
 def generate_content(client, messages, verbose):
     response = client.models.generate_content(
@@ -51,12 +57,13 @@ def generate_content(client, messages, verbose):
             Response tokens: {response.usage_metadata.candidates_token_count}
             """)
     if not response.function_calls:
-        return f"Response:{response.text}"
+        return True, response.text, messages
     for f in response.function_calls:
         try:
             function_call_result = call_function(f, verbose)
             if not function_call_result.parts or len(function_call_result.parts) == 0:
                 raise Exception("No output from function")
+            # loop each response as a tool response so the prompt can follow conversation
             messages.append(types.Content(
                 role="tool",
                 parts=[function_call_result.parts[0]]
@@ -65,6 +72,7 @@ def generate_content(client, messages, verbose):
             raise Exception(f"Fatal exception, please check your inputs: tool call error: {e}")
         if verbose:
             print(f"-> {function_call_result.parts[0].function_response.response}")
+    return False, None, messages
 
 
 if __name__ == "__main__":
